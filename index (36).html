@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LessonCraft — AI Teaching Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --ink: #2c2416;
+    --ink2: #6b6050;
+    --teal: #2a7c6f;
+    --teal-light: #e6f4f1;
+    --teal-mid: #3a9e8e;
+    --amber: #c47d2a;
+    --amber-light: #fdf3e3;
+    --muted: #9a8e80;
+    --border: rgba(44,36,22,0.1);
+    --border2: rgba(44,36,22,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+  .container { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+  header { text-align: center; margin-bottom: 48px; }
+  .badge { display: inline-block; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); border: 1.5px solid var(--teal); padding: 5px 16px; border-radius: 20px; margin-bottom: 22px; background: var(--teal-light); font-weight: 600; }
+  h1 { font-family: 'Fraunces', serif; font-size: clamp(30px, 5vw, 48px); font-weight: 600; color: var(--ink); line-height: 1.15; margin-bottom: 14px; }
+  h1 em { font-style: italic; color: var(--teal); }
+  .subtitle { font-size: 16px; color: var(--ink2); font-weight: 300; max-width: 500px; margin: 0 auto; line-height: 1.7; }
+  .input-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 24px; box-shadow: 0 2px 20px rgba(44,36,22,0.06); }
+  .input-label { font-size: 11px; color: var(--teal); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; display: block; font-weight: 600; }
+  .topic-input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 16px; font-family: 'Nunito', sans-serif; color: var(--ink); outline: none; transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 18px; }
+  .topic-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(42,124,111,0.1); }
+  .topic-input::placeholder { color: var(--muted); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+  select { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 13px 18px; font-size: 15px; font-family: 'Nunito', sans-serif; color: var(--ink); outline: none; transition: border-color 0.2s; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232a7c6f' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+  select:focus { border-color: var(--teal); }
+  .access-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .code-input { flex: 1; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 16px; font-size: 14px; font-family: 'Nunito', sans-serif; color: var(--ink); outline: none; transition: border-color 0.2s; letter-spacing: 0.08em; text-transform: uppercase; }
+  .code-input:focus { border-color: var(--teal); }
+  .code-input::placeholder { text-transform: none; letter-spacing: normal; color: var(--muted); }
+  .unlock-btn { background: var(--teal-light); border: 1.5px solid var(--teal); color: var(--teal); padding: 12px 20px; border-radius: 12px; font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+  .unlock-btn:hover { background: var(--teal); color: white; }
+  .access-status { font-size: 13px; margin-bottom: 18px; min-height: 18px; }
+  .status-free { color: var(--muted); }
+  .status-unlocked { color: var(--teal); font-weight: 600; }
+  .status-error { color: #c0392b; }
+  .generate-btn { width: 100%; background: var(--teal); color: white; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-family: 'Nunito', sans-serif; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .generate-btn:hover { background: var(--teal-mid); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(42,124,111,0.25); }
+  .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .error-tip { font-size: 13px; color: #c0392b; margin-top: 12px; text-align: center; display: none; }
+  .error-tip.visible { display: block; }
+  .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; display: none; }
+  .loading.visible { display: block; }
+  .spinner { width: 32px; height: 32px; border: 2.5px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .tabs { display: flex; gap: 6px; background: var(--surface); border-radius: 14px; padding: 6px; margin-bottom: 24px; border: 1.5px solid var(--border); box-shadow: 0 1px 8px rgba(44,36,22,0.04); }
+  .tab { flex: 1; padding: 10px 8px; border: none; border-radius: 10px; background: transparent; color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .tab.active { background: var(--teal); color: white; }
+  .tab:hover:not(.active) { background: var(--teal-light); color: var(--teal); }
+  .results { display: none; }
+  .results.visible { display: block; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .sec-title { font-family: 'Fraunces', serif; font-size: 22px; color: var(--ink); font-weight: 600; }
+  .free-badge { font-size: 11px; background: var(--amber-light); color: var(--amber); border: 1.5px solid var(--amber); padding: 3px 12px; border-radius: 20px; font-weight: 600; }
+  .pro-badge { font-size: 11px; background: var(--teal-light); color: var(--teal); border: 1.5px solid var(--teal); padding: 3px 12px; border-radius: 20px; font-weight: 600; }
+  .content-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; padding: 24px 28px; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(44,36,22,0.04); }
+  .content-card h3 { font-family: 'Fraunces', serif; font-size: 17px; color: var(--teal); margin-bottom: 12px; font-weight: 600; }
+  .content-card p { font-size: 14px; color: var(--ink2); line-height: 1.8; }
+  .diff-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .diff-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 6px rgba(44,36,22,0.04); }
+  .diff-card.below { border-top: 4px solid #e8a87c; }
+  .diff-card.on { border-top: 4px solid var(--teal); }
+  .diff-card.above { border-top: 4px solid #7c6faa; }
+  .diff-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .diff-card.below .diff-label { color: #c47d2a; }
+  .diff-card.on .diff-label { color: var(--teal); }
+  .diff-card.above .diff-label { color: #7c6faa; }
+  .diff-card p { font-size: 13px; color: var(--ink2); line-height: 1.7; }
+  .locked-overlay { background: var(--surface2); border: 2px dashed var(--border); border-radius: 16px; padding: 32px; text-align: center; color: var(--muted); font-size: 14px; margin-top: 10px; }
+  .lock-icon { font-size: 28px; margin-bottom: 10px; }
+  .philosophy-box { margin-top: 24px; background: var(--surface2); border-left: 4px solid var(--teal); border-radius: 0 12px 12px 0; padding: 18px 22px; font-size: 13px; color: var(--ink2); line-height: 1.8; display: none; }
+  .philosophy-box.visible { display: block; }
+  .philosophy-box strong.title { color: var(--teal); display: block; margin-bottom: 10px; font-size: 14px; }
+  .pdf-btn { width: 100%; background: white; color: var(--teal); border: 2px solid var(--teal); border-radius: 12px; padding: 14px; font-size: 15px; font-family: 'Nunito', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 16px; display: none; }
+  .pdf-btn:hover { background: var(--teal-light); }
+  .pdf-btn.visible { display: block; }
+  @media (max-width: 600px) { .diff-grid { grid-template-columns: 1fr; } .row2 { grid-template-columns: 1fr; } }
+  @media print {
+    body { background: white; }
+    .input-card, .tabs, .pdf-btn, .philosophy-box, .badge, .subtitle, header .badge { display: none !important; }
+    .container { padding: 0; max-width: 100%; }
+    header { margin-bottom: 16px; }
+    h1 { font-size: 26px; }
+    .results { display: block !important; }
+    .section { display: block !important; margin-bottom: 32px; page-break-after: always; }
+    .section:last-child { page-break-after: avoid; }
+    .content-card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 10px; box-shadow: none; }
+    .diff-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .diff-card { border: 1px solid #ccc; box-shadow: none; }
+    .locked-overlay { display: none; }
+    .free-badge, .pro-badge { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="badge">Your AI Teaching Assistant</div>
+    <h1>Lesson<em>Craft</em></h1>
+    <p class="subtitle">Your AI teaching assistant — plan lessons in seconds! Enter a topic, grade, and subject to get a full lesson plan, worksheets, and differentiated activities.</p>
+  </header>
+
+  <div class="input-card">
+    <label class="input-label">Topic</label>
+    <input class="topic-input" type="text" id="topicInput" placeholder="e.g. The Water Cycle, Fractions, World War II, Photosynthesis…" />
+
+    <div class="row2">
+      <div>
+        <label class="input-label">Grade Level</label>
+        <select id="gradeInput">
+          <option value="Grade 1-2">Grade 1–2</option>
+          <option value="Grade 3-4">Grade 3–4</option>
+          <option value="Grade 5-6" selected>Grade 5–6</option>
+          <option value="Grade 7-8">Grade 7–8</option>
+          <option value="Grade 9-10">Grade 9–10</option>
+          <option value="Grade 11-12">Grade 11–12</option>
+        </select>
+      </div>
+      <div>
+        <label class="input-label">Subject</label>
+        <select id="subjectInput">
+          <option value="Science">Science</option>
+          <option value="Math">Math</option>
+          <option value="English / Language Arts">English / Language Arts</option>
+          <option value="History / Social Studies">History / Social Studies</option>
+          <option value="Geography">Geography</option>
+          <option value="Art and Music">Art & Music</option>
+          <option value="Physical Education">Physical Education</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+    </div>
+
+    <label class="input-label">Access code <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:12px;font-weight:400;">(optional — unlock full content)</span></label>
+    <div class="access-row">
+      <input class="code-input" type="text" id="codeInput" placeholder="Enter your code" maxlength="20" />
+      <button class="unlock-btn" onclick="checkCode()">Unlock</button>
+    </div>
+    <div class="access-status status-free" id="accessStatus">Free preview: lesson plan + 2 worksheet questions — enter a code to unlock everything</div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generate()">Generate Lesson Materials</button>
+    <div class="error-tip" id="errorTip">Could not connect. Please try again.</div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Building your lesson materials…
+  </div>
+
+  <div class="results" id="results">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('plan',this)">Lesson Plan</button>
+      <button class="tab" onclick="showTab('worksheet',this)">Worksheet</button>
+      <button class="tab" onclick="showTab('diff',this)">Differentiation</button>
+    </div>
+
+    <div class="section active" id="sec-plan">
+      <div class="sec-header"><span class="sec-title">Lesson Plan</span><span id="planBadge" class="pro-badge">Full access</span></div>
+      <div id="planContent"></div>
+    </div>
+
+    <div class="section" id="sec-worksheet">
+      <div class="sec-header"><span class="sec-title">Worksheet</span><span id="worksheetBadge" class="free-badge">2 of 5 — free</span></div>
+      <div id="worksheetContent"></div>
+    </div>
+
+    <div class="section" id="sec-diff">
+      <div class="sec-header"><span class="sec-title">Differentiated Activities</span><span id="diffBadge" class="free-badge">Code required</span></div>
+      <div id="diffContent"></div>
+    </div>
+  </div>
+
+  <div class="philosophy-box" id="philosophyBox">
+    <strong class="title">A note on using AI wisely</strong>
+    AI is your teaching assistant, not a replacement for your expertise. These materials are a starting point — always review, adapt, and make them your own before using in the classroom.<br>
+    <span style="margin-top:6px;display:block;"><strong>Review and adapt</strong> — you know your students best</span>
+    <span style="margin-top:6px;display:block;"><strong>Verify facts</strong> — critical review is essential</span>
+    <span style="margin-top:6px;display:block;"><strong>Personalise</strong> — use this as inspiration, not the final word</span>
+    <br><span style="font-size:11px; color:var(--muted);">Content generated by Claude AI (Anthropic). Always verify before classroom use.</span>
+  </div>
+
+  <button class="pdf-btn" id="pdfBtn" onclick="downloadPDF()">Download as PDF</button>
+</div>
+
+<script>
+const VALID_CODES = ['LESSON2026','TEACH2026'];
+const MAX_USES = 10;
+const FREE_LIMIT = 2;
+let isUnlocked = false, currentData = null, activeCode = null;
+
+function getUsage(code) { return parseInt(localStorage.getItem('lc_usage_' + code) || '0'); }
+function incrementUsage(code) {
+  const used = getUsage(code) + 1;
+  localStorage.setItem('lc_usage_' + code, used);
+  return used;
+}
+
+function checkCode() {
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  const status = document.getElementById('accessStatus');
+  if (VALID_CODES.includes(code)) {
+    const used = getUsage(code);
+    if (used >= MAX_USES) {
+      status.className = 'access-status status-error';
+      status.textContent = 'This code has reached its limit.';
+      return;
+    }
+    isUnlocked = true;
+    activeCode = code;
+    status.className = 'access-status status-unlocked';
+    status.textContent = '✓ Full access unlocked — ' + (MAX_USES - used) + ' generations remaining';
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('generateBtn').textContent = 'Generate Lesson Materials';
+    if (currentData) renderAll(currentData);
+  } else if (code) {
+    status.className = 'access-status status-error';
+    status.textContent = '✗ Invalid code. Try LESSON2026 as a demo.';
+  }
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+async function generate() {
+  const topic = document.getElementById('topicInput').value.trim();
+  if (!topic) { document.getElementById('topicInput').focus(); return; }
+
+  if (!isUnlocked) {
+    const freeUsed = parseInt(localStorage.getItem('lc_free_usage') || '0');
+    if (freeUsed >= FREE_LIMIT) {
+      document.getElementById('accessStatus').textContent = 'Free limit reached — enter an access code to continue.';
+      document.getElementById('accessStatus').className = 'access-status status-error';
+      document.getElementById('generateBtn').disabled = true;
+      return;
+    }
+  }
+
+  if (isUnlocked && activeCode && getUsage(activeCode) >= MAX_USES) {
+    document.getElementById('accessStatus').textContent = 'No generations remaining on this code.';
+    document.getElementById('accessStatus').className = 'access-status status-error';
+    return;
+  }
+
+  const grade = document.getElementById('gradeInput').value;
+  const subject = document.getElementById('subjectInput').value;
+
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('results').classList.remove('visible');
+  document.getElementById('pdfBtn').classList.remove('visible');
+  document.getElementById('philosophyBox').classList.remove('visible');
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('errorTip').classList.remove('visible');
+
+  try {
+    const resp = await fetch('/.netlify/functions/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ topic, grade, subject })
+    });
+    if (!resp.ok) throw new Error('status ' + resp.status);
+    currentData = await resp.json();
+
+    if (isUnlocked && activeCode) {
+      const used = incrementUsage(activeCode);
+      const remaining = MAX_USES - used;
+      const status = document.getElementById('accessStatus');
+      status.className = 'access-status status-unlocked';
+      status.textContent = '✓ Full access — ' + remaining + ' generation' + (remaining !== 1 ? 's' : '') + ' remaining';
+    }
+
+    renderAll(currentData);
+  } catch(e) {
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('errorTip').classList.add('visible');
+  }
+}
+
+function renderAll(data) {
+  document.getElementById('loading').classList.remove('visible');
+
+  if (isUnlocked && activeCode && getUsage(activeCode) < MAX_USES) {
+    document.getElementById('generateBtn').disabled = false;
+  } else if (!isUnlocked) {
+    const freeUsed = parseInt(localStorage.getItem('lc_free_usage') || '0') + 1;
+    localStorage.setItem('lc_free_usage', freeUsed);
+    if (freeUsed >= FREE_LIMIT) {
+      document.getElementById('generateBtn').disabled = true;
+      document.getElementById('accessStatus').textContent = 'Free limit reached (' + freeUsed + '/' + FREE_LIMIT + ') — enter an access code to continue.';
+      document.getElementById('accessStatus').className = 'access-status status-error';
+    } else {
+      document.getElementById('generateBtn').disabled = false;
+    }
+  }
+
+  // Lesson Plan
+  const pc = document.getElementById('planContent');
+  pc.innerHTML = '';
+  const plan = data.lessonPlan;
+  [
+    {title: 'Learning Objectives', content: plan.objectives},
+    {title: 'Materials Needed', content: plan.materials},
+    {title: 'Introduction (10 min)', content: plan.introduction},
+    {title: 'Main Activity (25 min)', content: plan.mainActivity},
+    {title: 'Closure (10 min)', content: plan.closure},
+    {title: 'Assessment', content: plan.assessment},
+  ].forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'content-card';
+    card.innerHTML = '<h3>' + item.title + '</h3><p>' + item.content + '</p>';
+    pc.appendChild(card);
+  });
+
+  // Worksheet
+  document.getElementById('worksheetBadge').textContent = isUnlocked ? '5 questions' : '2 of 5 — free';
+  document.getElementById('worksheetBadge').className = isUnlocked ? 'pro-badge' : 'free-badge';
+  const wc = document.getElementById('worksheetContent');
+  wc.innerHTML = '';
+  const questions = isUnlocked ? data.worksheet : data.worksheet.slice(0, 2);
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'content-card';
+    card.innerHTML = '<h3>Question ' + (i+1) + '</h3><p>' + q + '</p>';
+    wc.appendChild(card);
+  });
+  if (!isUnlocked) {
+    const l = document.createElement('div');
+    l.className = 'locked-overlay';
+    l.innerHTML = '<div class="lock-icon">🔒</div>3 more questions — enter an access code to unlock';
+    wc.appendChild(l);
+  }
+
+  // Differentiation
+  document.getElementById('diffBadge').textContent = isUnlocked ? 'Full access' : 'Code required';
+  document.getElementById('diffBadge').className = isUnlocked ? 'pro-badge' : 'free-badge';
+  const dc = document.getElementById('diffContent');
+  dc.innerHTML = '';
+  if (isUnlocked) {
+    const grid = document.createElement('div');
+    grid.className = 'diff-grid';
+    [{key:'below',label:'Below Level',cls:'below'},{key:'on',label:'On Level',cls:'on'},{key:'above',label:'Above Level',cls:'above'}].forEach(lv => {
+      const card = document.createElement('div');
+      card.className = 'diff-card ' + lv.cls;
+      card.innerHTML = '<div class="diff-label">' + lv.label + '</div><p>' + data.differentiation[lv.key] + '</p>';
+      grid.appendChild(card);
+    });
+    dc.appendChild(grid);
+  } else {
+    const l = document.createElement('div');
+    l.className = 'locked-overlay';
+    l.innerHTML = '<div class="lock-icon">🔒</div>Differentiated activities for below, on, and above level learners — enter an access code to unlock';
+    dc.appendChild(l);
+  }
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('philosophyBox').classList.add('visible');
+  document.getElementById('pdfBtn').classList.add('visible');
+}
+
+function downloadPDF() {
+  const topic = document.getElementById('topicInput').value || 'Lesson';
+  document.title = 'LessonCraft — ' + topic;
+  window.print();
+  document.title = 'LessonCraft — AI Teaching Assistant';
+}
+</script>
+</body>
+</html>
